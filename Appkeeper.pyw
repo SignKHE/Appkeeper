@@ -26,7 +26,13 @@ def main():
     
     while True:
         if not is_process_running(program_name, program_path):
-            subprocess.Popen([runpath])
+            # 확장자 검사
+            if runpath.lower().endswith('.lnk'):
+                # 바로가기 파일 실행
+                os.startfile(runpath)
+            else:
+                # 일반 실행 파일 실행
+                subprocess.Popen([runpath])
         time.sleep(10)
 if __name__=='__main__':
     main()
