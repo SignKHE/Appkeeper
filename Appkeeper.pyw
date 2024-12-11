@@ -22,10 +22,11 @@ def main():
     
     program_name = config['Program']['name']
     program_path = config['Program']['path']
+    runpath = config['Program']['runpath']
     
     while True:
         if not is_process_running(program_name, program_path):
-            subprocess.Popen([program_path])
+            subprocess.Popen([runpath])
         time.sleep(10)
 if __name__=='__main__':
     main()
