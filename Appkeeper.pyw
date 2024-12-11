@@ -5,10 +5,10 @@ import os
 import sys
 import psutil
 
-def is_process_running(ps_name):
-    for proc in psutil.process_iter(['name']):
+def is_process_running(ps_name, ps_path):
+    for proc in psutil.process_iter(['name', 'exe']):
         try:
-            if proc.info['name'] == ps_name:
+            if proc.info['name'] == ps_name and proc.info['exe'] == ps_path:
                 return True
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass
@@ -24,8 +24,8 @@ def main():
     program_path = config['Program']['path']
     
     while True:
-        if not is_process_running(program_name):
+        if not is_process_running(program_name, program_path):
             subprocess.Popen([program_path])
-        time.sleep(5)
+        time.sleep(10)
 if __name__=='__main__':
     main()
