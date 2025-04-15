@@ -1,31 +1,32 @@
+import sys
 import subprocess
 import time
 import configparser
 import os
 
-def load_program_config(config_path):
+def get_config_path():
     """
-    주어진 config.ini 파일 경로에서 [Program] 섹션의 정보를 읽어와
-    실행 파일 경로와 실행 인자를 반환하는 함수입니다.
-    
-    반환 예시:
-      {
-         "path": "C:\\Windows\\System32\\notepad.exe",
-         "args": "a=실행인자 b=예제"
-      }
+    실행 파일이 빌드된 exe일 경우 sys.frozen 속성이 True가 되므로,
+    이때는 sys.executable의 위치(즉, exe가 위치한 디렉토리)를 기준으로 config.ini의 경로를 설정합니다.
+    개발 환경에서는 __file__을 기준으로 config.ini의 경로를 설정합니다.
     """
-    config = configparser.ConfigParser()
-    config.read(config_path, encoding='utf-8')
-    
-    # [Program] 섹션에서 path와 args 값을 가져옴
-    path_value = config.get('Program', 'path', fallback=None)
-    args_value = config.get('Program', 'args', fallback="")
+    if getattr(sys, 'frozen', False):
+        # exe로 빌드된 경우
+        base_path = os.path.dirname(sys.executable)
+    else:
+        # 스크립트 상태인 경우
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base_path, 'config.ini')
 
-    # args 값이 큰따옴표로 둘러싸여 있으면 제거
-    if args_value.startswith('"') and args_value.endswith('"'):
-        args_value = args_value[1:-1]
-    
-    return {"path": path_value, "args": args_value}
+def load_config():
+    """
+    config.ini 파일을 읽어 [Program] 섹션의 설정값을 반환합니다.
+    """
+    config_path = get_config_path()
+    config = configparser.ConfigParser()
+    # 파일이 없으면 예외 발생하거나 기본값을 설정할 수 있으므로, 필요에 따라 예외처리하세요.
+    config.read(config_path, encoding='utf-8')
+    return config
 
 def run_and_monitor(exe_path, arg_str):
     while True:
@@ -44,14 +45,11 @@ def run_and_monitor(exe_path, arg_str):
                 break  # 내부 루프 종료 후, 바깥 루프에서 새 프로세스 실행
 
 if __name__ == '__main__':
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    config_file = os.path.join(script_dir, 'config.ini')
-
-    program_config = load_program_config(config_file)
+    config = load_config()
 
     # 실행할 실행파일의 전체 경로를 지정합니다.
-    exe_path = program_config["path"]
+    exe_path = config.get('Program', 'path', fallback='')
     # 실행 인자로 전달할 문자열을 지정합니다.
-    arg_str = program_config["args"]
+    arg_str = config.get('Program', 'args', fallback='')
 
     run_and_monitor(exe_path, arg_str)
