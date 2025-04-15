@@ -4,14 +4,17 @@ import time
 import configparser
 import os
 import logging
+from logging.handlers import RotatingFileHandler
 
-# 원하시는 로깅 설정: 로그를 "my_log_file.log" 파일에 추가 모드로 기록합니다.
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(message)s',
-    filename='my_log_file.log',  # 로그를 저장할 파일명 지정
-    filemode='a'  # 파일 모드: 'a'는 추가, 'w'는 덮어쓰기
-)
+# logger 생성 및 설정
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+# RotatingFileHandler 설정: 최대 1MB, 백업 파일 5개
+handler = RotatingFileHandler('my_log_file.log', maxBytes=1024*1024, backupCount=5)
+formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 def get_config_path():
     """
@@ -40,7 +43,7 @@ def load_config():
         sys.exit(1)
     return config
 
-def run_and_monitor(exe_path, arg_str):
+def run_and_monitor(exe_path, arg_str,monitor_interval):
     """
     exe_path에 지정된 실행 파일과 arg_str(실행 인자)을 사용하여 프로세스를 실행하고,
     monitor_interval 초마다 프로세스가 살아있는지 체크합니다.
@@ -57,9 +60,9 @@ def run_and_monitor(exe_path, arg_str):
             logging.error("프로세스 실행 실패: %s", e)
             break
         
-        # 실행 중인 프로세스를 30초 간격으로 모니터링합니다.
+        # 실행 중인 프로세스를 monitor_interval초 간격으로 모니터링합니다.
         while True:
-            time.sleep(30)
+            time.sleep(monitor_interval)
             # process.poll()이 None이면 프로세스가 여전히 실행 중임을 의미합니다.
             if process.poll() is None:
                 logging.info("프로세스 %s 실행 중", process.pid)
@@ -73,9 +76,10 @@ if __name__ == '__main__':
     # config.ini의 [Program] 섹션에서 실행 파일 경로와 실행 인자 읽기
     exe_path = config.get('Program', 'path', fallback='')
     arg_str = config.get('Program', 'args', fallback='')
+    monitor_interval = config.getint('Program', 'monitor_interval', fallback=30)
 
     if not exe_path:
         logging.error("실행 파일 경로가 비어 있습니다. config.ini 파일을 확인하세요.")
         sys.exit(1)
 
-    run_and_monitor(exe_path, arg_str)
+    run_and_monitor(exe_path, arg_str,monitor_interval)
