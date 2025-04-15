@@ -34,12 +34,12 @@ def load_config():
     """
     config_path = get_config_path()
     if not os.path.exists(config_path):
-        logging.error("설정 파일을 찾을 수 없습니다: %s", config_path)
+        logger.error("설정 파일을 찾을 수 없습니다: %s", config_path)
         sys.exit(1)
     config = configparser.ConfigParser()
     config.read(config_path, encoding='utf-8')
     if 'Program' not in config:
-        logging.error("config.ini에 [Program] 섹션이 없습니다.")
+        logger.error("config.ini에 [Program] 섹션이 없습니다.")
         sys.exit(1)
     return config
 
@@ -55,9 +55,9 @@ def run_and_monitor(exe_path, arg_str,monitor_interval):
                 process = subprocess.Popen([exe_path, arg_str])
             else: 
                 process = subprocess.Popen([exe_path])
-            logging.info(f"프로세스 시작됨. PID: {process.pid}")
+            logger.info(f"프로세스 시작됨. PID: {process.pid}")
         except Exception as e:
-            logging.error("프로세스 실행 실패: %s", e)
+            logger.error("프로세스 실행 실패: %s", e)
             break
         
         # 실행 중인 프로세스를 monitor_interval초 간격으로 모니터링합니다.
@@ -65,12 +65,14 @@ def run_and_monitor(exe_path, arg_str,monitor_interval):
             time.sleep(monitor_interval)
             # process.poll()이 None이면 프로세스가 여전히 실행 중임을 의미합니다.
             if process.poll() is None:
-                logging.info("프로세스 %s 실행 중", process.pid)
+                logger.info("프로세스 %s 실행 중", process.pid)
             else:
-                logging.info("프로세스 %s 종료됨. 재실행합니다...", process.pid)
+                logger.info("프로세스 %s 종료됨. 재실행합니다...", process.pid)
                 break  # 내부 루프 종료 후, 바깥 루프에서 새 프로세스 실행
 
 if __name__ == '__main__':
+    for i in range(0,100000):
+        logger.info(f"테스트 로그{i}")
     config = load_config()
 
     # config.ini의 [Program] 섹션에서 실행 파일 경로와 실행 인자 읽기
@@ -79,7 +81,7 @@ if __name__ == '__main__':
     monitor_interval = config.getint('Program', 'monitor_interval', fallback=30)
 
     if not exe_path:
-        logging.error("실행 파일 경로가 비어 있습니다. config.ini 파일을 확인하세요.")
+        logger.error("실행 파일 경로가 비어 있습니다. config.ini 파일을 확인하세요.")
         sys.exit(1)
 
     run_and_monitor(exe_path, arg_str,monitor_interval)
