@@ -71,8 +71,6 @@ def run_and_monitor(exe_path, arg_str,monitor_interval):
                 break  # 내부 루프 종료 후, 바깥 루프에서 새 프로세스 실행
 
 if __name__ == '__main__':
-    for i in range(0,100000):
-        logger.info(f"테스트 로그{i}")
     config = load_config()
 
     # config.ini의 [Program] 섹션에서 실행 파일 경로와 실행 인자 읽기
